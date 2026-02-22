@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rugpull Tracker | Live Monitor</title>
+    <title>Rugpull Tracker | Live Feed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -31,21 +31,22 @@
     <header class="w-full max-w-lg text-center mt-12 mb-10 sticky top-0 z-50 py-2">
         <div class="bg-white/60 backdrop-blur-xl rounded-[35px] py-5 px-10 inline-block border-2 border-white shadow-xl">
             <p class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-1">Total Loss Captured Today</p>
-            <h1 id="total-lost" class="text-5xl font-[900] tracking-tighter tabular-nums">$12,450,000</h1>
+            <h1 id="total-lost" class="text-5xl font-[900] tracking-tighter tabular-nums text-black">$12,450,000</h1>
         </div>
     </header>
 
-    <!-- SECTION 1: RUGPULLS TODAY -->
+    <!-- SECTION 1: RUGPULLS TODAY (LIVE FEED) -->
     <section class="w-full max-w-lg mb-16">
         <h2 class="text-[14px] font-black uppercase tracking-[0.2em] text-red-500 mb-6 flex items-center gap-2 px-2">
             <span class="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"></span> Rugpulls Today
         </h2>
-        <div id="rug-feed" class="space-y-6">
+        <div id="rug-feed" class="space-y-6 min-h-[100px]">
             <!-- Rug cards pop here -->
+            <p id="loading-text" class="text-center py-10 text-gray-400 text-xs font-bold animate-pulse">Scanning Solana, Base, ETH & BNB for Rugs...</p>
         </div>
     </section>
 
-    <!-- SECTION 2: BIGGEST LOSERS TODAY -->
+    <!-- SECTION 2: BIGGEST LOSERS TODAY (24h) -->
     <section class="w-full max-w-lg mb-24">
         <h2 class="text-[14px] font-black uppercase tracking-[0.2em] text-gray-400 mb-6 px-2">Biggest Losers (24h)</h2>
         <div id="losers-feed" class="space-y-4">
@@ -69,6 +70,7 @@
         const rugFeed = document.getElementById('rug-feed');
         const losersFeed = document.getElementById('losers-feed');
         const counterEl = document.getElementById('total-lost');
+        const loadingText = document.getElementById('loading-text');
         const seen = new Set();
 
         const CHAINS = {
@@ -81,11 +83,14 @@
 
         function createCard(data, isLoser = false) {
             if (seen.has(data.pairAddress) && !isLoser) return;
-            if (!isLoser) seen.add(data.pairAddress);
+            if (!isLoser) {
+                seen.add(data.pairAddress);
+                loadingText.style.display = 'none';
+            }
 
             const chain = CHAINS[data.chainId] || { icon: '💰', color: 'bg-gray-400', name: data.chainId };
             const mcap = data.fdv ? `$${(data.fdv / 1000).toFixed(1)}k` : 'N/A';
-            const extracted = Math.floor(parseFloat(data.liquidity?.usd || 0) * 0.95);
+            const extracted = Math.floor(parseFloat(data.liquidity?.usd || 0) * 0.9);
             const drop = Math.abs(parseFloat(isLoser ? data.priceChange.h24 : data.priceChange.h1 || 0)).toFixed(1);
 
             const card = document.createElement('div');
@@ -113,14 +118,14 @@
                         <p class="text-[8px] font-black text-gray-400 uppercase mb-1">Market Cap</p>
                         <p class="text-sm font-black text-gray-700">${mcap}</p>
                     </div>
-                    <div class="bg-gray-50 rounded-2xl p-3 border border-white flex flex-col justify-center items-center">
-                        <a href="${data.url}" target="_blank" class="text-[9px] font-black bg-black text-white px-4 py-2 rounded-full uppercase tracking-widest w-full text-center">Chart ↗</a>
+                    <div class="bg-gray-50 rounded-2xl p-3 border border-white flex flex-col justify-center items-center text-center">
+                        <a href="${data.url}" target="_blank" class="text-[9px] font-black bg-black text-white px-4 py-2 rounded-full uppercase tracking-widest w-full">Chart ↗</a>
                     </div>
                 </div>
 
-                <div class="bg-white/50 p-2 rounded-xl border border-gray-100 flex items-center justify-between overflow-hidden">
+                <div class="bg-white/50 p-2 rounded-xl border border-gray-100 flex items-center justify-between">
                     <span class="text-[7px] font-bold text-gray-400 uppercase truncate mr-2">Addr: ${data.pairAddress}</span>
-                    <button onclick="navigator.clipboard.writeText('${data.pairAddress}')" class="text-[7px] font-black text-blue-500 uppercase flex-shrink-0">Copy</button>
+                    <button onclick="navigator.clipboard.writeText('${data.pairAddress}')" class="text-[7px] font-black text-blue-500 uppercase">Copy</button>
                 </div>
             `;
 
@@ -133,7 +138,7 @@
                 moneyCount += extracted;
                 counterEl.innerText = '$' + moneyCount.toLocaleString();
 
-                // 5 Minuten Persistenz (300.000 ms)
+                // 5 Minuten Persistenz
                 setTimeout(() => {
                     card.classList.add('fade-exit');
                     setTimeout(() => { card.remove(); seen.delete(data.pairAddress); }, 800);
@@ -141,30 +146,39 @@
             }
         }
 
-        async function fetchRugs() {
-            try {
-                // DEXScreener Scan nach massiven 1h drops
-                const res = await fetch('https://api.dexscreener.com/latest/dex/search?q=drop');
-                const data = await res.json();
-                if (data.pairs) {
-                    const rugPairs = data.pairs.filter(p => p.priceChange && parseFloat(p.priceChange.h1) < -70 && ['solana', 'bsc', 'ethereum', 'base', 'pulsechain'].includes(p.chainId));
-                    rugPairs.slice(0, 3).forEach(p => createCard(p, false));
-                }
-            } catch (e) {}
-        }
+        // Neue Logik: Wir scannen aktiv nach Paaren auf verschiedenen Chains
+        const searchQueries = ['SOL', 'WETH', 'USDC', 'BNB', 'BASE', 'PULSE'];
+        let queryIndex = 0;
 
-        async function fetchLosers() {
+        async function scanDex() {
             try {
-                const res = await fetch('https://api.dexscreener.com/latest/dex/search?q=drop');
+                const query = searchQueries[queryIndex];
+                queryIndex = (queryIndex + 1) % searchQueries.length;
+
+                const res = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${query}`);
                 const data = await res.json();
+                
                 if (data.pairs) {
-                    losersFeed.innerHTML = '';
-                    const losers = data.pairs
-                        .filter(p => p.priceChange && p.priceChange.h24 < -50 && ['solana', 'bsc', 'ethereum', 'base', 'pulsechain'].includes(p.chainId))
-                        .sort((a,b) => a.priceChange.h24 - b.priceChange.h24);
-                    losers.slice(0, 15).forEach(p => createCard(p, true));
+                    // Filter für Live Rugs: Drop > 70% in der letzten Stunde
+                    const rugs = data.pairs.filter(p => 
+                        p.priceChange && 
+                        parseFloat(p.priceChange.h1) < -70 && 
+                        ['solana', 'bsc', 'ethereum', 'base', 'pulsechain'].includes(p.chainId)
+                    );
+                    rugs.slice(0, 3).forEach(p => createCard(p, false));
+
+                    // Die größten Verlierer der letzten 24h für die untere Sektion
+                    if (queryIndex === 0) { // Nur einmal pro Zyklus aktualisieren
+                        const dailyLosers = data.pairs
+                            .filter(p => p.priceChange && p.priceChange.h24 < -50)
+                            .sort((a,b) => a.priceChange.h24 - b.priceChange.h24)
+                            .slice(0, 10);
+                        
+                        losersFeed.innerHTML = '';
+                        dailyLosers.forEach(p => createCard(p, true));
+                    }
                 }
-            } catch (e) {}
+            } catch (e) { console.error("API Error:", e); }
         }
 
         function copyAddr() {
@@ -174,10 +188,9 @@
             setTimeout(() => { h.innerText = "Tap to Copy Address"; h.style.color = "#9ca3af"; }, 2000);
         }
 
-        setInterval(fetchRugs, 12000);
-        setInterval(fetchLosers, 60000);
-        fetchRugs();
-        fetchLosers();
+        // Scanner Intervall: Alle 5 Sekunden eine neue Abfrage
+        setInterval(scanDex, 5000);
+        scanDex();
     </script>
 </body>
 </html>
