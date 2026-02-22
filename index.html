@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rugpull Tracker | Live Feed</title>
+    <title>Rugpull Tracker | Live Monitor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #F2F2F7; scroll-behavior: smooth; overflow-x: hidden; }
         .ios-card {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(25px);
-            border-radius: 42px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 40px;
             border: 4px solid #ffffff;
             box-shadow: 0 20px 50px rgba(0,0,0,0.06);
         }
@@ -27,30 +27,29 @@
 </head>
 <body class="p-4 flex flex-col items-center">
 
-    <!-- COUNTER FIXED AT TOP -->
+    <!-- TOP COUNTER -->
     <header class="w-full max-w-lg text-center mt-12 mb-10 sticky top-0 z-50 py-2">
-        <div class="bg-white/60 backdrop-blur-xl rounded-[35px] py-5 px-10 inline-block border-2 border-white shadow-xl">
-            <p class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-1">Total Loss Captured Today</p>
+        <div class="bg-white/70 backdrop-blur-2xl rounded-[35px] py-5 px-10 inline-block border-2 border-white shadow-xl">
+            <p class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-1">Money Lost So Far Today</p>
             <h1 id="total-lost" class="text-5xl font-[900] tracking-tighter tabular-nums text-black">$12,450,000</h1>
         </div>
     </header>
 
-    <!-- SECTION 1: RUGPULLS TODAY (LIVE FEED) -->
+    <!-- SECTION 1: RUGPULLS TODAY -->
     <section class="w-full max-w-lg mb-16">
         <h2 class="text-[14px] font-black uppercase tracking-[0.2em] text-red-500 mb-6 flex items-center gap-2 px-2">
             <span class="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"></span> Rugpulls Today
         </h2>
-        <div id="rug-feed" class="space-y-6 min-h-[100px]">
-            <!-- Rug cards pop here -->
-            <p id="loading-text" class="text-center py-10 text-gray-400 text-xs font-bold animate-pulse">Scanning Solana, Base, ETH & BNB for Rugs...</p>
+        <div id="rug-feed" class="space-y-6">
+            <p id="rug-loading" class="text-center py-10 text-gray-400 text-[10px] font-bold animate-pulse uppercase tracking-widest">Scanning live trenches...</p>
         </div>
     </section>
 
-    <!-- SECTION 2: BIGGEST LOSERS TODAY (24h) -->
+    <!-- SECTION 2: BIGGEST LOSERS TODAY -->
     <section class="w-full max-w-lg mb-24">
-        <h2 class="text-[14px] font-black uppercase tracking-[0.2em] text-gray-400 mb-6 px-2">Biggest Losers (24h)</h2>
+        <h2 class="text-[14px] font-black uppercase tracking-[0.2em] text-gray-400 mb-6 px-2">Biggest Losers Today</h2>
         <div id="losers-feed" class="space-y-4">
-            <!-- List of 24h losers -->
+            <p class="text-center py-10 text-gray-400 text-[10px] font-bold animate-pulse uppercase tracking-widest">Fetching daily losers...</p>
         </div>
     </section>
 
@@ -59,7 +58,7 @@
         <div class="ios-card p-10 text-center shadow-2xl border-[6px] border-white">
             <p class="text-sm font-bold text-gray-500 mb-6">Like the site? Buy me a coffee ☕️</p>
             <div class="bg-gray-50 p-4 rounded-3xl border border-gray-100 mb-4 active:scale-95 transition-transform" onclick="copyAddr()">
-                <code class="text-[10px] break-all text-blue-500 font-mono font-bold">0xc09333b92695619ab1b799300dfa131abb244d44</code>
+                <code class="text-[10px] break-all text-blue-500 font-mono font-bold leading-relaxed">0xc09333b92695619ab1b799300dfa131abb244d44</code>
             </div>
             <p id="copy-hint" class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Tap to Copy Address</p>
         </div>
@@ -70,8 +69,9 @@
         const rugFeed = document.getElementById('rug-feed');
         const losersFeed = document.getElementById('losers-feed');
         const counterEl = document.getElementById('total-lost');
-        const loadingText = document.getElementById('loading-text');
-        const seen = new Set();
+        
+        const seenRugs = new Set();
+        const persistentLosers = new Map(); // Speichert Loser permanent
 
         const CHAINS = {
             'solana': { icon: '⚡', color: 'bg-purple-500', name: 'SOL' },
@@ -82,19 +82,13 @@
         };
 
         function createCard(data, isLoser = false) {
-            if (seen.has(data.pairAddress) && !isLoser) return;
-            if (!isLoser) {
-                seen.add(data.pairAddress);
-                loadingText.style.display = 'none';
-            }
-
             const chain = CHAINS[data.chainId] || { icon: '💰', color: 'bg-gray-400', name: data.chainId };
             const mcap = data.fdv ? `$${(data.fdv / 1000).toFixed(1)}k` : 'N/A';
-            const extracted = Math.floor(parseFloat(data.liquidity?.usd || 0) * 0.9);
             const drop = Math.abs(parseFloat(isLoser ? data.priceChange.h24 : data.priceChange.h1 || 0)).toFixed(1);
+            const extracted = Math.floor(parseFloat(data.liquidity?.usd || 0) * 0.9);
 
             const card = document.createElement('div');
-            card.className = `ios-card p-6 ${!isLoser ? 'animate-pop' : 'border-[3px]'} relative mb-4`;
+            card.className = `ios-card p-6 ${!isLoser ? 'animate-pop' : ''} relative mb-4`;
             
             card.innerHTML = `
                 <div class="flex justify-between items-start mb-4">
@@ -106,7 +100,7 @@
                         </div>
                     </div>
                     <div class="text-right">
-                        <p class="text-[8px] font-black text-gray-300 uppercase tracking-widest leading-none mb-1">${isLoser ? '24H Drop' : 'Extracted'}</p>
+                        <p class="text-[8px] font-black text-gray-300 uppercase tracking-widest leading-none mb-1">${isLoser ? '24H DROP' : 'EXTRACTED'}</p>
                         <p class="text-xl font-black ${isLoser ? 'text-orange-500' : 'text-red-600'} tracking-tighter">
                             ${isLoser ? '-' + drop + '%' : '$' + extracted.toLocaleString()}
                         </p>
@@ -118,67 +112,73 @@
                         <p class="text-[8px] font-black text-gray-400 uppercase mb-1">Market Cap</p>
                         <p class="text-sm font-black text-gray-700">${mcap}</p>
                     </div>
-                    <div class="bg-gray-50 rounded-2xl p-3 border border-white flex flex-col justify-center items-center text-center">
-                        <a href="${data.url}" target="_blank" class="text-[9px] font-black bg-black text-white px-4 py-2 rounded-full uppercase tracking-widest w-full">Chart ↗</a>
+                    <div class="bg-gray-50 rounded-2xl p-3 border border-white flex flex-col justify-center items-center">
+                        <a href="${data.url}" target="_blank" class="text-[9px] font-black bg-black text-white px-4 py-2 rounded-full uppercase tracking-widest w-full text-center">Chart ↗</a>
                     </div>
                 </div>
 
-                <div class="bg-white/50 p-2 rounded-xl border border-gray-100 flex items-center justify-between">
-                    <span class="text-[7px] font-bold text-gray-400 uppercase truncate mr-2">Addr: ${data.pairAddress}</span>
-                    <button onclick="navigator.clipboard.writeText('${data.pairAddress}')" class="text-[7px] font-black text-blue-500 uppercase">Copy</button>
+                <div class="bg-white p-2 rounded-xl border border-gray-100 flex items-center justify-between overflow-hidden">
+                    <span class="text-[7px] font-bold text-gray-300 uppercase truncate mr-2">Addr: ${data.pairAddress}</span>
+                    <button onclick="navigator.clipboard.writeText('${data.pairAddress}')" class="text-[7px] font-black text-blue-500 uppercase flex-shrink-0">Copy</button>
                 </div>
             `;
-
-            if (isLoser) {
-                losersFeed.appendChild(card);
-            } else {
-                rugFeed.prepend(card);
-                if (rugFeed.children.length > 20) rugFeed.lastElementChild.remove();
-                
-                moneyCount += extracted;
-                counterEl.innerText = '$' + moneyCount.toLocaleString();
-
-                // 5 Minuten Persistenz
-                setTimeout(() => {
-                    card.classList.add('fade-exit');
-                    setTimeout(() => { card.remove(); seen.delete(data.pairAddress); }, 800);
-                }, 300000);
-            }
+            return card;
         }
 
-        // Neue Logik: Wir scannen aktiv nach Paaren auf verschiedenen Chains
-        const searchQueries = ['SOL', 'WETH', 'USDC', 'BNB', 'BASE', 'PULSE'];
-        let queryIndex = 0;
+        const queries = ['SOL', 'WETH', 'WBNB', 'USDC', 'BASE', 'PULSE'];
+        let qIdx = 0;
 
-        async function scanDex() {
+        async function updateDashboard() {
             try {
-                const query = searchQueries[queryIndex];
-                queryIndex = (queryIndex + 1) % searchQueries.length;
+                const query = queries[qIdx];
+                qIdx = (qIdx + 1) % queries.length;
 
                 const res = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${query}`);
                 const data = await res.json();
                 
-                if (data.pairs) {
-                    // Filter für Live Rugs: Drop > 70% in der letzten Stunde
-                    const rugs = data.pairs.filter(p => 
-                        p.priceChange && 
-                        parseFloat(p.priceChange.h1) < -70 && 
-                        ['solana', 'bsc', 'ethereum', 'base', 'pulsechain'].includes(p.chainId)
-                    );
-                    rugs.slice(0, 3).forEach(p => createCard(p, false));
+                if (!data.pairs) return;
 
-                    // Die größten Verlierer der letzten 24h für die untere Sektion
-                    if (queryIndex === 0) { // Nur einmal pro Zyklus aktualisieren
-                        const dailyLosers = data.pairs
-                            .filter(p => p.priceChange && p.priceChange.h24 < -50)
-                            .sort((a,b) => a.priceChange.h24 - b.priceChange.h24)
-                            .slice(0, 10);
+                // 1. LIVE RUGPULLS (1h drop > 70%)
+                const rugs = data.pairs.filter(p => p.priceChange && parseFloat(p.priceChange.h1) < -70);
+                rugs.forEach(p => {
+                    if (!seenRugs.has(p.pairAddress)) {
+                        seenRugs.add(p.pairAddress);
+                        document.getElementById('rug-loading').style.display = 'none';
+                        const card = createCard(p, false);
+                        rugFeed.prepend(card);
                         
-                        losersFeed.innerHTML = '';
-                        dailyLosers.forEach(p => createCard(p, true));
+                        // Counter Animation
+                        moneyCount += Math.floor(parseFloat(p.liquidity?.usd || 0) * 0.9);
+                        counterEl.innerText = '$' + moneyCount.toLocaleString();
+
+                        if (rugFeed.children.length > 20) rugFeed.lastElementChild.remove();
+                        setTimeout(() => {
+                            card.classList.add('fade-exit');
+                            setTimeout(() => { card.remove(); seenRugs.delete(p.pairAddress); }, 800);
+                        }, 300000);
                     }
+                });
+
+                // 2. BIGGEST LOSERS TODAY (24h drop > 40%)
+                const losers = data.pairs.filter(p => p.priceChange && parseFloat(p.priceChange.h24) < -40);
+                losers.forEach(p => {
+                    // Wir speichern nur die 15 heftigsten Verlierer
+                    persistentLosers.set(p.pairAddress, p);
+                });
+
+                // Loser Liste sortieren und anzeigen
+                const sortedLosers = Array.from(persistentLosers.values())
+                    .sort((a, b) => parseFloat(a.priceChange.h24) - parseFloat(b.priceChange.h24))
+                    .slice(0, 15);
+
+                if (sortedLosers.length > 0) {
+                    losersFeed.innerHTML = '';
+                    sortedLosers.forEach(p => {
+                        losersFeed.appendChild(createCard(p, true));
+                    });
                 }
-            } catch (e) { console.error("API Error:", e); }
+
+            } catch (e) { console.error("API Error"); }
         }
 
         function copyAddr() {
@@ -188,9 +188,9 @@
             setTimeout(() => { h.innerText = "Tap to Copy Address"; h.style.color = "#9ca3af"; }, 2000);
         }
 
-        // Scanner Intervall: Alle 5 Sekunden eine neue Abfrage
-        setInterval(scanDex, 5000);
-        scanDex();
+        // Intervall: Alle 5 Sekunden scannen
+        setInterval(updateDashboard, 5000);
+        updateDashboard();
     </script>
 </body>
 </html>
