@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -7,92 +7,186 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #F2F2F7; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; background-color: #F2F2F7; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+        
+        /* Premium iOS Squircle Style */
         .ios-card {
-            background: rgba(255, 255, 255, 0.85);
+            background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-radius: 35px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 42px;
+            border: 4px solid #ffffff;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+            transform: translateZ(0);
         }
-        @keyframes popIn {
-            0% { transform: scale(0.5) translateY(40px); opacity: 0; }
-            70% { transform: scale(1.05) translateY(-5px); opacity: 1; }
+
+        .squircle { border-radius: 22%; }
+
+        /* Pop Animation */
+        @keyframes rugPop {
+            0% { transform: scale(0.5) translateY(60px); opacity: 0; }
+            80% { transform: scale(1.05) translateY(-5px); opacity: 1; }
             100% { transform: scale(1) translateY(0); opacity: 1; }
         }
-        @keyframes fadeOut {
-            to { transform: scale(0.8); opacity: 0; filter: blur(10px); }
+        .animate-pop { animation: rugPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+        /* Exit Animation */
+        .fade-out {
+            opacity: 0 !important;
+            transform: scale(0.8) translateY(-20px) !important;
+            filter: blur(15px);
+            transition: all 0.8s ease-in-out;
         }
-        .animate-pop { animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-        .animate-exit { animation: fadeOut 0.5s ease forwards; }
+
+        /* Number Animation */
+        #money-counter { transition: all 0.3s ease; display: inline-block; }
+        .bump { transform: scale(1.1); color: #FF3B30; }
     </style>
 </head>
-<body class="p-4">
+<body class="p-4 flex flex-col items-center min-h-screen">
 
-    <div class="max-w-md mx-auto">
-        <!-- TOP COUNTER -->
-        <div class="text-center mt-12 mb-10">
-            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2">Money Lost So Far</p>
-            <h1 id="total-lost" class="text-5xl font-black tracking-tighter tabular-nums transition-all duration-300">$12,450,890</h1>
-        </div>
+    <!-- TOP HEADER -->
+    <header class="w-full max-w-lg text-center mt-12 mb-10 sticky top-0 z-50 py-4 bg-[#F2F2F7]/70 backdrop-blur-lg rounded-full">
+        <p class="text-[11px] font-black uppercase tracking-[0.3em] text-gray-400 mb-2">Money Lost So Far</p>
+        <h1 id="money-counter" class="text-5xl md:text-6xl font-[900] tracking-tighter text-black tabular-nums">
+            $12,450,000
+        </h1>
+    </header>
 
-        <!-- RUG FEED -->
-        <div id="feed" class="space-y-4 min-h-[400px]">
-            <!-- Dynamic cards pop here -->
-        </div>
+    <!-- LIVE FEED -->
+    <main id="feed" class="w-full max-w-lg space-y-6 flex flex-col items-center">
+        <!-- Rug Cards erscheinen hier -->
+    </main>
 
-        <!-- FOOTER -->
-        <div class="mt-20 mb-10 ios-card p-8 text-center border-2 border-white">
-            <p class="text-sm font-bold text-gray-600 mb-4">Like the site? Buy me a coffee ☕️</p>
-            <div class="bg-white/50 p-4 rounded-2xl border border-gray-200 mb-2" onclick="copyAddress()">
-                <code id="wallet" class="text-[10px] break-all text-gray-400 font-mono">0xc09333b92695619ab1b799300dfa131abb244d44</code>
-            </div>
-            <p id="copy-status" class="text-[9px] font-black uppercase text-blue-500 tracking-widest">Tap to Copy</p>
+    <!-- STATUS INDICATOR -->
+    <div class="mt-12 mb-20 flex items-center gap-3 opacity-40">
+        <div class="flex h-3 w-3 relative">
+            <span class="animate-ping absolute h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span class="relative h-3 w-3 rounded-full bg-red-500"></span>
         </div>
+        <p class="text-[10px] font-black uppercase tracking-widest text-red-600 italic">Scanning Trenches: SOL, ETH, BNB, BASE, PULSE</p>
     </div>
 
-    <script>
-        let counterValue = 12450890;
-        const feed = document.getElementById('feed');
-        const counterEl = document.getElementById('total-lost');
+    <!-- DONATION FOOTER -->
+    <footer class="w-full max-w-lg mb-16">
+        <div class="ios-card p-10 text-center shadow-2xl border-white border-[6px]">
+            <p class="text-sm font-bold text-gray-600 mb-6">Like the site? Buy me a coffee ☕️</p>
+            <div class="bg-white/50 p-4 rounded-3xl border border-gray-200 mb-4 active:scale-95 transition-transform cursor-pointer" onclick="copyAddress()">
+                <code id="addr" class="text-[10px] md:text-xs break-all text-blue-500 font-mono font-bold tracking-tight">0xc09333b92695619ab1b799300dfa131abb244d44</code>
+            </div>
+            <p id="hint" class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tap to Copy Address</p>
+        </div>
+    </footer>
 
-        const configs = {
-            solana: { name: 'Solana', icon: '⚡', color: 'bg-purple-500' },
-            ethereum: { name: 'Ethereum', icon: '🔹', color: 'bg-blue-500' },
-            bsc: { name: 'BNB Chain', icon: '🔸', color: 'bg-yellow-500' },
-            base: { name: 'Base', icon: '🔵', color: 'bg-blue-600' },
-            pulsechain: { name: 'Pulse', icon: '💗', color: 'bg-pink-500' }
+    <script>
+        let totalLost = 12450000;
+        const feed = document.getElementById('feed');
+        const counter = document.getElementById('money-counter');
+        const seen = new Set();
+
+        const CHAIN_MAP = {
+            'solana': { name: 'Solana', icon: '⚡', color: 'bg-[#14F195]' },
+            'bsc': { name: 'BNB', icon: '🔸', color: 'bg-[#F3BA2F]' },
+            'ethereum': { name: 'ETH', icon: '🔹', color: 'bg-[#627EEA]' },
+            'base': { name: 'Base', icon: '🔵', color: 'bg-[#0052FF]' },
+            'pulsechain': { name: 'Pulse', icon: '💗', color: 'bg-[#FF00FF]' }
         };
 
-        function addRug(data) {
-            const card = document.createElement('div');
-            card.className = "ios-card p-5 flex items-center justify-between animate-pop";
-            
-            const chain = configs[data.chainId] || { name: data.chainId, icon: '💰', color: 'bg-gray-400' };
-            const amount = Math.floor(Math.random() * 45000) + 2000;
+        function updateCounter(amount) {
+            totalLost += amount;
+            counter.innerText = '$' + totalLost.toLocaleString();
+            counter.classList.add('bump');
+            setTimeout(() => counter.classList.remove('bump'), 300);
+        }
 
+        function createCard(data) {
+            if (seen.has(data.id)) return;
+            seen.add(data.id);
+
+            const chain = CHAIN_MAP[data.chain] || { name: 'Unknown', icon: '💰', color: 'bg-slate-400' };
+            const card = document.createElement('div');
+            card.className = "w-full ios-card p-6 flex items-center justify-between animate-pop";
+            
             card.innerHTML = `
-                <div class="flex items-center gap-4">
-                    <div class="w-14 h-14 ${chain.color} rounded-[22px] flex items-center justify-center text-2xl shadow-inner border-2 border-white/20">
+                <div class="flex items-center gap-5">
+                    <div class="w-16 h-16 ${chain.color} squircle flex items-center justify-center text-3xl shadow-inner border-4 border-white/40 text-white font-bold">
                         ${chain.icon}
                     </div>
                     <div>
-                        <h3 class="font-black text-lg leading-tight">${data.baseToken.symbol}</h3>
-                        <div class="flex items-center gap-2 mt-0.5">
-                            <span class="text-[9px] font-bold px-1.5 py-0.5 bg-gray-100 rounded-md text-gray-500 uppercase">${chain.name}</span>
-                            <span class="text-red-500 text-[10px] font-black">-${Math.abs(data.priceChange.h1).toFixed(0)}%</span>
+                        <h3 class="font-[900] text-2xl tracking-tight leading-none mb-1 uppercase">${data.symbol}</h3>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-black bg-white px-2 py-0.5 rounded-lg text-slate-400 shadow-sm border border-slate-100 uppercase">${chain.name}</span>
+                            <span class="text-red-500 text-[11px] font-black italic">-${data.drop}% DROP</span>
                         </div>
                     </div>
                 </div>
                 <div class="text-right">
-                    <p class="text-[9px] font-bold text-gray-400 uppercase">Extracted</p>
-                    <p class="text-2xl font-black text-red-600 tracking-tighter">$${amount.toLocaleString()}</p>
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Extracted</p>
+                    <p class="text-2xl font-black text-red-600 tracking-tighter tabular-nums">$${data.extracted.toLocaleString()}</p>
                 </div>
             `;
 
             feed.prepend(card);
+            updateCounter(data.extracted);
+
+            // Auto-Vanish nach 12 Sekunden
+            setTimeout(() => {
+                card.classList.add('fade-out');
+                setTimeout(() => { card.remove(); seen.delete(data.id); }, 800);
+            }, 12000);
+        }
+
+        // Suche nach echten Rugs auf DexScreener
+        async function scan() {
+            const pools = ['WETH', 'SOL', 'WBNB', 'BASE', 'PULSE'];
+            const query = pools[Math.floor(Math.random() * pools.length)];
             
-            // Update Top Counter
-            counterValue += amount;
-            counterEl.inne
+            try {
+                const res = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${query}`);
+                const json = await res.json();
+                
+                if (json.pairs) {
+                    // Suche nach Shitcoins mit > 70% Drop
+                    const rugs = json.pairs.filter(p => p.priceChange && parseFloat(p.priceChange.h1) < -70);
+                    
+                    rugs.slice(0, 2).forEach(rug => {
+                        createCard({
+                            id: rug.pairAddress,
+                            symbol: rug.baseToken.symbol,
+                            chain: rug.chainId,
+                            drop: Math.abs(parseFloat(rug.priceChange.h1)).toFixed(0),
+                            extracted: Math.floor(parseFloat(rug.liquidity?.usd || 0) * 0.9)
+                        });
+                    });
+                }
+            } catch (e) { console.log("API Scanning..."); }
+        }
+
+        // Sofortige Test-Karten (Simulation), damit die Seite nie leer aussieht
+        function demo() {
+            const testRugs = [
+                { id: '1', symbol: 'PEPE', chain: 'ethereum', drop: '99', extracted: 145000 },
+                { id: '2', symbol: 'MOON', chain: 'solana', drop: '82', extracted: 45200 },
+                { id: '3', symbol: 'SAFE', chain: 'bsc', drop: '76', extracted: 12900 }
+            ];
+            testRugs.forEach((r, i) => setTimeout(() => createCard(r), i * 1500));
+        }
+
+        function copyAddress() {
+            navigator.clipboard.writeText('0xc09333b92695619ab1b799300dfa131abb244d44');
+            document.getElementById('hint').innerText = "COPIED TO CLIPBOARD!";
+            document.getElementById('hint').style.color = "#007AFF";
+            setTimeout(() => {
+                document.getElementById('hint').innerText = "Tap to Copy Address";
+                document.getElementById('hint').style.color = "#94a3b8";
+            }, 2000);
+        }
+
+        // START
+        counter.innerText = '$' + totalLost.toLocaleString();
+        demo(); 
+        setInterval(scan, 6000); // Alle 6 Sekunden neue Daten suchen
+    </script>
+</body>
+    </html>
+        
