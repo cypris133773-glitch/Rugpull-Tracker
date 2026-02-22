@@ -1,176 +1,169 @@
-   <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rugpull & Loser Tracker</title>
+    <title>Rugpull Tracker | Live Monitor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #F2F2F7; color: #1c1c1e; scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; background-color: #F2F2F7; scroll-behavior: smooth; overflow-x: hidden; }
         .ios-card {
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border-radius: 40px;
+            border-radius: 42px;
             border: 4px solid #ffffff;
             box-shadow: 0 20px 50px rgba(0,0,0,0.06);
         }
         .squircle { border-radius: 24%; }
-        @keyframes rugPop {
-            0% { transform: scale(0.5) translateY(50px); opacity: 0; }
+        @keyframes popIn {
+            0% { transform: scale(0.6) translateY(50px); opacity: 0; }
             100% { transform: scale(1) translateY(0); opacity: 1; }
         }
-        .animate-pop { animation: rugPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-        .fade-exit { opacity: 0 !important; transform: scale(0.8) translateY(-20px) !important; filter: blur(10px); transition: all 0.8s ease; }
-        .token-chart { height: 60px; width: 120px; background: #fef2f2; border-radius: 12px; position: relative; overflow: hidden; }
-        .chart-line { stroke: #ef4444; stroke-width: 3; fill: none; }
+        .animate-pop { animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        .fade-exit { opacity: 0; transform: scale(0.9) translateY(-20px); filter: blur(10px); transition: all 0.8s ease; }
+        ::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="p-4 flex flex-col items-center">
 
-    <!-- HEADER -->
-    <header class="w-full max-w-lg text-center mt-12 mb-10 sticky top-0 z-50 py-2 bg-[#F2F2F7]/50 backdrop-blur-md">
-        <p class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-1">Money Lost So Far</p>
-        <h1 id="global-counter" class="text-5xl md:text-6xl font-[900] tracking-tighter text-black tabular-nums">$42,890,500</h1>
+    <!-- COUNTER FIXED AT TOP -->
+    <header class="w-full max-w-lg text-center mt-12 mb-10 sticky top-0 z-50 py-2">
+        <div class="bg-white/60 backdrop-blur-xl rounded-[35px] py-5 px-10 inline-block border-2 border-white shadow-xl">
+            <p class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-1">Total Loss Captured Today</p>
+            <h1 id="total-lost" class="text-5xl font-[900] tracking-tighter tabular-nums">$12,450,000</h1>
+        </div>
     </header>
 
-    <!-- LIVE RUG FEED SECTION -->
-    <section class="w-full max-w-lg mb-20">
-        <h2 class="text-xs font-black uppercase tracking-widest text-red-500 mb-6 flex items-center gap-2">
-            <span class="flex h-2 w-2 rounded-full bg-red-500 animate-ping"></span> Live Rugpulls (5m Persistence)
+    <!-- SECTION 1: RUGPULLS TODAY -->
+    <section class="w-full max-w-lg mb-16">
+        <h2 class="text-[14px] font-black uppercase tracking-[0.2em] text-red-500 mb-6 flex items-center gap-2 px-2">
+            <span class="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"></span> Rugpulls Today
         </h2>
         <div id="rug-feed" class="space-y-6">
             <!-- Rug cards pop here -->
         </div>
     </section>
 
-    <!-- BIGGEST LOSERS SECTION -->
-    <section class="w-full max-w-lg mb-20">
-        <h2 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-6">Biggest Losers Today</h2>
-        <div id="losers-list" class="space-y-4">
-            <!-- Table-like list of 24h losers -->
+    <!-- SECTION 2: BIGGEST LOSERS TODAY -->
+    <section class="w-full max-w-lg mb-24">
+        <h2 class="text-[14px] font-black uppercase tracking-[0.2em] text-gray-400 mb-6 px-2">Biggest Losers (24h)</h2>
+        <div id="losers-feed" class="space-y-4">
+            <!-- List of 24h losers -->
         </div>
     </section>
 
-    <!-- DONATION FOOTER -->
-    <footer class="w-full max-w-lg mb-16">
+    <!-- FOOTER DONATION -->
+    <footer class="w-full max-w-lg mb-20">
         <div class="ios-card p-10 text-center shadow-2xl border-[6px] border-white">
-            <p class="text-sm font-bold text-gray-500 mb-6 italic">Like the site? Buy me a coffee ☕️</p>
-            <div class="bg-white/50 p-4 rounded-3xl border border-gray-100 mb-4 active:scale-95 transition-transform cursor-pointer" onclick="copyAddr()">
-                <code id="wallet" class="text-[10px] break-all text-blue-500 font-mono font-bold">0xc09333b92695619ab1b799300dfa131abb244d44</code>
+            <p class="text-sm font-bold text-gray-500 mb-6">Like the site? Buy me a coffee ☕️</p>
+            <div class="bg-gray-50 p-4 rounded-3xl border border-gray-100 mb-4 active:scale-95 transition-transform" onclick="copyAddr()">
+                <code class="text-[10px] break-all text-blue-500 font-mono font-bold">0xc09333b92695619ab1b799300dfa131abb244d44</code>
             </div>
             <p id="copy-hint" class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Tap to Copy Address</p>
         </div>
     </footer>
 
     <script>
-        let totalLost = 42890500;
+        let moneyCount = 12450000;
         const rugFeed = document.getElementById('rug-feed');
-        const losersList = document.getElementById('losers-list');
-        const counter = document.getElementById('global-counter');
-        const seenPairs = new Set();
-        const rugCountLimit = 20;
+        const losersFeed = document.getElementById('losers-feed');
+        const counterEl = document.getElementById('total-lost');
+        const seen = new Set();
 
         const CHAINS = {
-            'solana': { name: 'SOL', icon: '⚡', color: 'bg-purple-500' },
-            'bsc': { name: 'BNB', icon: '🔸', color: 'bg-yellow-400' },
-            'ethereum': { name: 'ETH', icon: '🔹', color: 'bg-blue-500' },
-            'base': { name: 'BASE', icon: '🔵', color: 'bg-blue-600' },
-            'pulsechain': { name: 'PULSE', icon: '💗', color: 'bg-pink-500' }
+            'solana': { icon: '⚡', color: 'bg-purple-500', name: 'SOL' },
+            'bsc': { icon: '🔸', color: 'bg-yellow-400', name: 'BNB' },
+            'ethereum': { icon: '🔹', color: 'bg-blue-500', name: 'ETH' },
+            'base': { icon: '🔵', color: 'bg-blue-600', name: 'BASE' },
+            'pulsechain': { icon: '💗', color: 'bg-pink-500', name: 'PLS' }
         };
 
-        function createRugCard(data) {
-            if (seenPairs.has(data.pairAddress)) return;
-            if (rugFeed.children.length >= rugCountLimit) rugFeed.lastElementChild.remove();
-            seenPairs.add(data.pairAddress);
+        function createCard(data, isLoser = false) {
+            if (seen.has(data.pairAddress) && !isLoser) return;
+            if (!isLoser) seen.add(data.pairAddress);
 
-            const chain = CHAINS[data.chainId] || { name: 'CRYPTO', icon: '💰', color: 'bg-gray-400' };
-            const drop = Math.abs(parseFloat(data.priceChange.h1 || 0)).toFixed(0);
+            const chain = CHAINS[data.chainId] || { icon: '💰', color: 'bg-gray-400', name: data.chainId };
+            const mcap = data.fdv ? `$${(data.fdv / 1000).toFixed(1)}k` : 'N/A';
             const extracted = Math.floor(parseFloat(data.liquidity?.usd || 0) * 0.95);
+            const drop = Math.abs(parseFloat(isLoser ? data.priceChange.h24 : data.priceChange.h1 || 0)).toFixed(1);
 
             const card = document.createElement('div');
-            card.className = "ios-card p-6 animate-pop relative overflow-hidden";
+            card.className = `ios-card p-6 ${!isLoser ? 'animate-pop' : 'border-[3px]'} relative mb-4`;
+            
             card.innerHTML = `
                 <div class="flex justify-between items-start mb-4">
                     <div class="flex items-center gap-4">
                         <div class="w-14 h-14 ${chain.color} squircle flex items-center justify-center text-2xl shadow-inner border-4 border-white/40 text-white font-bold">${chain.icon}</div>
                         <div>
-                            <h3 class="font-[900] text-xl leading-none uppercase tracking-tight">${data.baseToken.symbol}</h3>
-                            <p class="text-[10px] font-bold text-gray-400 uppercase">${data.baseToken.name}</p>
+                            <h3 class="font-[900] text-xl leading-none uppercase tracking-tighter">${data.baseToken.symbol}</h3>
+                            <p class="text-[9px] font-bold text-gray-400 uppercase mt-1 truncate w-32">${data.baseToken.name}</p>
                         </div>
                     </div>
                     <div class="text-right">
-                        <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Extracted</p>
-                        <p class="text-xl font-black text-red-600 tracking-tighter">$${extracted.toLocaleString()}</p>
+                        <p class="text-[8px] font-black text-gray-300 uppercase tracking-widest leading-none mb-1">${isLoser ? '24H Drop' : 'Extracted'}</p>
+                        <p class="text-xl font-black ${isLoser ? 'text-orange-500' : 'text-red-600'} tracking-tighter">
+                            ${isLoser ? '-' + drop + '%' : '$' + extracted.toLocaleString()}
+                        </p>
                     </div>
                 </div>
-                
-                <div class="flex justify-between items-center bg-gray-50/50 p-3 rounded-[20px] border border-white">
-                    <div class="token-chart">
-                        <svg viewBox="0 0 120 60" class="w-full h-full">
-                            <path d="M0,10 L30,15 L60,45 L90,55 L120,58" class="chart-line"></path>
-                        </svg>
+
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="bg-gray-50 rounded-2xl p-3 border border-white">
+                        <p class="text-[8px] font-black text-gray-400 uppercase mb-1">Market Cap</p>
+                        <p class="text-sm font-black text-gray-700">${mcap}</p>
                     </div>
-                    <div class="text-right flex flex-col items-end gap-2">
-                        <a href="${data.url}" target="_blank" class="text-[9px] font-black bg-black text-white px-3 py-1.5 rounded-full uppercase tracking-widest">Transaction ↗</a>
-                        <span class="text-red-500 text-[10px] font-black italic">-${drop}% CRASH</span>
+                    <div class="bg-gray-50 rounded-2xl p-3 border border-white flex flex-col justify-center items-center">
+                        <a href="${data.url}" target="_blank" class="text-[9px] font-black bg-black text-white px-4 py-2 rounded-full uppercase tracking-widest w-full text-center">Chart ↗</a>
                     </div>
+                </div>
+
+                <div class="bg-white/50 p-2 rounded-xl border border-gray-100 flex items-center justify-between overflow-hidden">
+                    <span class="text-[7px] font-bold text-gray-400 uppercase truncate mr-2">Addr: ${data.pairAddress}</span>
+                    <button onclick="navigator.clipboard.writeText('${data.pairAddress}')" class="text-[7px] font-black text-blue-500 uppercase flex-shrink-0">Copy</button>
                 </div>
             `;
 
-            rugFeed.prepend(card);
-            totalLost += extracted;
-            counter.innerText = '$' + totalLost.toLocaleString();
+            if (isLoser) {
+                losersFeed.appendChild(card);
+            } else {
+                rugFeed.prepend(card);
+                if (rugFeed.children.length > 20) rugFeed.lastElementChild.remove();
+                
+                moneyCount += extracted;
+                counterEl.innerText = '$' + moneyCount.toLocaleString();
 
-            // Verschwindet nach 5 Minuten (300000ms)
-            setTimeout(() => {
-                card.classList.add('fade-exit');
+                // 5 Minuten Persistenz (300.000 ms)
                 setTimeout(() => {
-                    card.remove();
-                    seenPairs.delete(data.pairAddress);
-                }, 800);
-            }, 300000);
+                    card.classList.add('fade-exit');
+                    setTimeout(() => { card.remove(); seen.delete(data.pairAddress); }, 800);
+                }, 300000);
+            }
         }
 
         async function fetchRugs() {
             try {
-                const res = await fetch('https://api.dexscreener.com/latest/dex/search?q=rug');
+                // DEXScreener Scan nach massiven 1h drops
+                const res = await fetch('https://api.dexscreener.com/latest/dex/search?q=drop');
                 const data = await res.json();
                 if (data.pairs) {
-                    const rugList = data.pairs.filter(p => p.priceChange && parseFloat(p.priceChange.h1) < -70);
-                    rugList.slice(0, 3).forEach(createRugCard);
+                    const rugPairs = data.pairs.filter(p => p.priceChange && parseFloat(p.priceChange.h1) < -70 && ['solana', 'bsc', 'ethereum', 'base', 'pulsechain'].includes(p.chainId));
+                    rugPairs.slice(0, 3).forEach(p => createCard(p, false));
                 }
             } catch (e) {}
         }
 
         async function fetchLosers() {
             try {
-                // GeckoTerminal API für echte Loser-Daten
-                const res = await fetch('https://api.geckoterminal.com/api/v2/networks/solana/new_pools');
-                const json = await res.json();
-                losersList.innerHTML = ''; // Refresh
-                
-                json.data.slice(0, 10).forEach(pool => {
-                    const attr = pool.attributes;
-                    const change = parseFloat(attr.price_change_percentage?.h24 || 0);
-                    const item = document.createElement('div');
-                    item.className = "ios-card p-4 flex justify-between items-center border-[3px]";
-                    item.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-gray-100 squircle flex items-center justify-center font-black text-xs">SOL</div>
-                            <div>
-                                <p class="font-black text-sm uppercase">${attr.name.split(' / ')[0]}</p>
-                                <p class="text-[8px] font-bold text-gray-400 tracking-widest uppercase">24H Loser</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-red-500 font-black text-sm">${change.toFixed(1)}%</p>
-                            <p class="text-[8px] font-black text-gray-300">TODAY</p>
-                        </div>
-                    `;
-                    losersList.appendChild(item);
-                });
+                const res = await fetch('https://api.dexscreener.com/latest/dex/search?q=drop');
+                const data = await res.json();
+                if (data.pairs) {
+                    losersFeed.innerHTML = '';
+                    const losers = data.pairs
+                        .filter(p => p.priceChange && p.priceChange.h24 < -50 && ['solana', 'bsc', 'ethereum', 'base', 'pulsechain'].includes(p.chainId))
+                        .sort((a,b) => a.priceChange.h24 - b.priceChange.h24);
+                    losers.slice(0, 15).forEach(p => createCard(p, true));
+                }
             } catch (e) {}
         }
 
@@ -181,11 +174,10 @@
             setTimeout(() => { h.innerText = "Tap to Copy Address"; h.style.color = "#9ca3af"; }, 2000);
         }
 
-        // Intervalle
-        setInterval(fetchRugs, 10000); // Rugs alle 10s prüfen
-        setInterval(fetchLosers, 30000); // Loser alle 30s aktualisieren
+        setInterval(fetchRugs, 12000);
+        setInterval(fetchLosers, 60000);
         fetchRugs();
         fetchLosers();
     </script>
 </body>
-</html>             
+</html>
